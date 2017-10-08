@@ -1,5 +1,7 @@
 package edu.temple.cis.c3238.banksim;
 
+import java.util.concurrent.Semaphore;
+
 /**
  * @author Cay Horstmann
  * @author Modified by Paul Wolfgang
@@ -12,7 +14,10 @@ public class Bank {
     private final int initialBalance;
     private final int numAccounts;
     private boolean open;
-
+    private boolean isTesting;
+    private int isTransfering;
+    private int totalTests = 0;
+    
     public Bank(int numAccounts, int initialBalance) {
         open = true;
         this.initialBalance = initialBalance;
@@ -22,18 +27,40 @@ public class Bank {
             accounts[i] = new Account(this, i, initialBalance);
         }
         ntransacts = 0;
+        
+        isTransfering = 0;
+        isTesting = false;
     }
 
-    public void transfer(int from, int to, int amount) {
+    public void transfer(int from, int to, int amount) throws InterruptedException{
         accounts[from].waitForAvailableFunds(amount);
+        waitForTesting();
         if (!open) return;
         if (accounts[from].withdraw(amount)) {
             accounts[to].deposit(amount);
         }
-        if (shouldTest()) test();
+        finishedTransfering();
+        if (shouldTest()){
+            isTesting = true;
+            new TestThread(this).start();
+        }
+    }
+    
+    public synchronized void finishedTransfering(){
+        isTransfering--;
+        notifyAll();
+    }
+    public synchronized void waitForTesting() throws InterruptedException{
+        while(isTesting){
+            wait();
+        }
+        isTransfering++;
     }
 
-    public void test() {
+    public synchronized void test() throws InterruptedException {
+        while(isTransfering>0){
+            wait();
+        }
         int sum = 0;
         for (Account account : accounts) {
             System.out.printf("%s %s%n", 
@@ -50,6 +77,10 @@ public class Bank {
             System.out.println(Thread.currentThread().toString() + 
                     " The bank is in balance");
         }
+        totalTests++;
+        isTesting = false;
+        System.out.println("Total Tests: "+totalTests);
+        notifyAll();
     }
 
     public int size() {
@@ -72,5 +103,4 @@ public class Bank {
     public synchronized boolean shouldTest() {
         return ++ntransacts % NTEST == 0;
     }
-
 }

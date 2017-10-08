@@ -20,11 +20,9 @@ public class Account {
         return balance;
     }
     
-    public synchronized void waitForAvailableFunds(int amount) {
+    public synchronized void waitForAvailableFunds(int amount) throws InterruptedException {
         while (myBank.isOpen() && amount >= balance) {
-            try {
-                wait();
-            } catch (InterruptedException ex) { /* ignore */ }
+            wait();
         }
     }
 

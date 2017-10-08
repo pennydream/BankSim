@@ -1,4 +1,8 @@
 package edu.temple.cis.c3238.banksim;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Cay Horstmann
  * @author Modified by Paul Wolfgang
@@ -20,7 +24,9 @@ class TransferThread extends Thread {
         for (int i = 0; i < 10000; i++) {
             int toAccount = (int) (bank.size() * Math.random());
             int amount = (int) (maxAmount * Math.random());
-            bank.transfer(fromAccount, toAccount, amount);
+            try {
+                bank.transfer(fromAccount, toAccount, amount);
+            } catch (InterruptedException ex) {            }
         }
         bank.closeBank();
     }
