@@ -27,7 +27,7 @@ public class Account {
     }
 
     public synchronized boolean withdraw(int amount) {
-        if (amount <= balance) {
+        if ((amount <= balance) && myBank.isOpen()) {
             int currentBalance = balance;
             Thread.yield(); // Try to force collision
             int newBalance = currentBalance - amount;
@@ -39,6 +39,7 @@ public class Account {
     }
 
     public synchronized void deposit(int amount) {
+        if(!myBank.isOpen()) return;
         int currentBalance = balance;
         Thread.yield();   // Try to force collision
         int newBalance = currentBalance + amount;

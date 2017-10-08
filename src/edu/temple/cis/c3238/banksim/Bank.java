@@ -34,13 +34,16 @@ public class Bank {
 
     public void transfer(int from, int to, int amount) throws InterruptedException{
         accounts[from].waitForAvailableFunds(amount);
-        waitForTesting();
-        if (!open) return;
+        if (open) waitForTesting();
+        if (!open){
+            finishedTransfering();
+            return;
+        }
         if (accounts[from].withdraw(amount)) {
             accounts[to].deposit(amount);
         }
         finishedTransfering();
-        if (shouldTest()){
+        if (shouldTest() && open){
             isTesting = true;
             new TestThread(this).start();
         }
@@ -51,15 +54,19 @@ public class Bank {
         notifyAll();
     }
     public synchronized void waitForTesting() throws InterruptedException{
-        while(isTesting){
+        while(isTesting && this.isOpen()){
             wait();
         }
-        isTransfering++;
+        if(open) isTransfering++;
     }
 
     public synchronized void test() throws InterruptedException {
-        while(isTransfering>0){
+        while(isTransfering>0 && open){
             wait();
+        }
+        if(!open){
+            isTesting = false;
+            return;
         }
         int sum = 0;
         for (Account account : accounts) {

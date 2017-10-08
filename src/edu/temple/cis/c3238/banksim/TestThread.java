@@ -17,8 +17,11 @@ class TestThread extends Thread {
 
     @Override
     public void run() {
-        try {
-            bank.test();
-        } catch (InterruptedException ex) {        }
+        if(!bank.isOpen()){
+        } else {
+            try {
+                bank.test();
+            } catch (InterruptedException ex) {        }
+        }
     }
 }
